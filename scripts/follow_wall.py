@@ -38,7 +38,7 @@ def take_action():
     msg = Twist()
     linear_x = 0
     angular_z = 0
-    dist = 1.5
+    dist = 1
     state_status = ''
     if regions['front'] > dist and regions['fleft'] > dist and regions['fright'] > dist:
         state_status = 'case 1 - nothing'
