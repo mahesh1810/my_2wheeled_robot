@@ -38,11 +38,8 @@ def take_action():
     msg = Twist()
     linear_x = 0
     angular_z = 0
-    
-    state_status = ''
-    
     dist = 1.5
-    
+    state_status = ''
     if regions['front'] > dist and regions['fleft'] > dist and regions['fright'] > dist:
         state_status = 'case 1 - nothing'
         change_state(0)
@@ -68,7 +65,7 @@ def take_action():
         state_status = 'case 8 - fleft and fright'
         change_state(0)
     else:
-        state_status = 'unknown case'
+        state_status = 'error in case'
 
 
 def find_wall():
@@ -90,7 +87,7 @@ def follow_the_wall():
 
 def main():
     global pub_
-    rospy.init_node('reading_laser')
+    rospy.init_node('laser_reading')
     pub_ = rospy.Publisher('/cmd_vel', Twist, queue_size=1)
     sub = rospy.Subscriber('/m2wr/laser/scan', LaserScan, callback_laser)
     rate = rospy.Rate(20)
@@ -104,10 +101,8 @@ def main():
             msg = follow_the_wall()
             pass
         else:
-            rospy.logerr('Unknown state!')
-        
+            rospy.logerr('state error!')
         pub_.publish(msg)
-        
         rate.sleep()
 
 if __name__ == '__main__':
