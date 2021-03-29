@@ -10,9 +10,9 @@ pub_ = None
 regions_ = {'right': 0,'fright': 0,'front': 0,'fleft': 0,'left': 0}
 state_ = 0
 state_dict_ = {
-    0: 'find the wall',
-    1: 'turn left',
-    2: 'follow the wall',
+    0: 'finding the wall',
+    1: 'turning left',
+    2: 'following the wall',
 }
 
 def callback_laser(msg):
