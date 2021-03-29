@@ -4,19 +4,10 @@
 import rospy
 from sensor_msgs.msg import LaserScan
 from geometry_msgs.msg import Twist
-from nav_msgs.msg import Odometry
-from tf import transformations
-import math
 
 #initialize states and variables
 pub_ = None
-regions_ = {
-    'right': 0,
-    'fright': 0,
-    'front': 0,
-    'fleft': 0,
-    'left': 0,
-}
+regions_ = {'right': 0,'fright': 0,'front': 0,'fleft': 0,'left': 0}
 state_ = 0
 state_dict_ = {
     0: 'find the wall',
@@ -24,16 +15,14 @@ state_dict_ = {
     2: 'follow the wall',
 }
 
-def clbk_laser(msg):
-    global regions_
-    regions_ = {
-        'right':  min(min(msg.ranges[0:143]), 10),
-        'fright': min(min(msg.ranges[144:287]), 10),
-        'front':  min(min(msg.ranges[288:431]), 10),
-        'fleft':  min(min(msg.ranges[432:575]), 10),
-        'left':   min(min(msg.ranges[576:713]), 10),
-    }
-
+def callback_laser(msg):
+    regions = [
+        min(min(msg.ranges[0:143]), 10),   #right region
+        min(min(msg.ranges[144:287]), 10), #front right region
+        min(min(msg.ranges[288:431]), 10), #front region
+        min(min(msg.ranges[432:575]), 10), #front left region
+        min(min(msg.ranges[576:713]), 10), #left region
+    ]
     take_action()
 
 
@@ -50,37 +39,37 @@ def take_action():
     linear_x = 0
     angular_z = 0
     
-    state_description = ''
+    state_status = ''
     
-    d = 1.5
+    dist = 1.5
     
-    if regions['front'] > d and regions['fleft'] > d and regions['fright'] > d:
-        state_description = 'case 1 - nothing'
+    if regions['front'] > dist and regions['fleft'] > dist and regions['fright'] > dist:
+        state_status = 'case 1 - nothing'
         change_state(0)
-    elif regions['front'] < d and regions['fleft'] > d and regions['fright'] > d:
-        state_description = 'case 2 - front'
+    elif regions['front'] < dist and regions['fleft'] > dist and regions['fright'] > dist:
+        state_status = 'case 2 - front'
         change_state(1)
-    elif regions['front'] > d and regions['fleft'] > d and regions['fright'] < d:
-        state_description = 'case 3 - fright'
+    elif regions['front'] > dist and regions['fleft'] > dist and regions['fright'] < dist:
+        state_status = 'case 3 - fright'
         change_state(2)
-    elif regions['front'] > d and regions['fleft'] < d and regions['fright'] > d:
-        state_description = 'case 4 - fleft'
+    elif regions['front'] > dist and regions['fleft'] < dist and regions['fright'] > dist:
+        state_status = 'case 4 - fleft'
         change_state(0)
-    elif regions['front'] < d and regions['fleft'] > d and regions['fright'] < d:
-        state_description = 'case 5 - front and fright'
+    elif regions['front'] < dist and regions['fleft'] > dist and regions['fright'] < dist:
+        state_status = 'case 5 - front and fright'
         change_state(1)
-    elif regions['front'] < d and regions['fleft'] < d and regions['fright'] > d:
-        state_description = 'case 6 - front and fleft'
+    elif regions['front'] < dist and regions['fleft'] < dist and regions['fright'] > dist:
+        state_status = 'case 6 - front and fleft'
         change_state(1)
-    elif regions['front'] < d and regions['fleft'] < d and regions['fright'] < d:
-        state_description = 'case 7 - front and fleft and fright'
+    elif regions['front'] < dist and regions['fleft'] < dist and regions['fright'] < dist:
+        state_status = 'case 7 - front and fleft and fright'
         change_state(1)
-    elif regions['front'] > d and regions['fleft'] < d and regions['fright'] < d:
-        state_description = 'case 8 - fleft and fright'
+    elif regions['front'] > dist and regions['fleft'] < dist and regions['fright'] < dist:
+        state_status = 'case 8 - fleft and fright'
         change_state(0)
     else:
-        state_description = 'unknown case'
-        rospy.loginfo(regions)
+        state_status = 'unknown case'
+
 
 def find_wall():
     msg = Twist()
@@ -95,20 +84,15 @@ def turn_left():
 
 def follow_the_wall():
     global regions_
-    
     msg = Twist()
     msg.linear.x = 0.5
     return msg
 
 def main():
     global pub_
-    
     rospy.init_node('reading_laser')
-    
     pub_ = rospy.Publisher('/cmd_vel', Twist, queue_size=1)
-    
-    sub = rospy.Subscriber('/m2wr/laser/scan', LaserScan, clbk_laser)
-    
+    sub = rospy.Subscriber('/m2wr/laser/scan', LaserScan, callback_laser)
     rate = rospy.Rate(20)
     while not rospy.is_shutdown():
         msg = Twist()
